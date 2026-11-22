@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='1' y='1' width='14' height='14' fill='%23c23a63'/%3E%3Crect x='17' y='1' width='14' height='14' fill='%23f2b84b'/%3E%3Crect x='1' y='17' width='14' height='14' fill='%232f9e9a'/%3E%3Crect x='17' y='17' width='14' height='14' fill='%234a6fd8'/%3E%3C/svg%3E">
+<title>Pixelator</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;700&display=swap">
+<style>
+:root{--bg:#eceef1;--panel:#fff;--mat:#d9dde3;--ink:#1f2430;--mute:#677083;--line:#dcdfe5;--accent:#c23a63;--accent-ink:#fff;--sel:#fbe7ee;
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#14161a;--panel:#1d2026;--mat:#101215;--ink:#e8eaee;--mute:#99a1b0;--line:#2e333c;--accent:#ec7d9f;--accent-ink:#2a0f19;--sel:#3a2430;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#14161a;--panel:#1d2026;--mat:#101215;--ink:#e8eaee;--mute:#99a1b0;--line:#2e333c;--accent:#ec7d9f;--accent-ink:#2a0f19;--sel:#3a2430;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px);height:100%}
+*{box-sizing:border-box}
+body{margin:0;height:100%;background:var(--bg);color:var(--ink);font:14px/1.4 Onest,system-ui,sans-serif}
+.app{display:grid;grid-template-columns:250px minmax(0,1fr) 260px;grid-template-rows:auto minmax(0,1fr);height:100%}
+.top{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;padding:10px 14px;background:var(--panel);border-bottom:1px solid var(--line)}
+.top h1{font-size:16px;margin:0 8px 0 0;font-weight:700}
+.sep{width:1px;align-self:stretch;background:var(--line);margin:0 4px}
+.side,.pal{background:var(--panel);padding:14px;overflow:auto;display:flex;flex-direction:column;gap:12px}
+.side{border-right:1px solid var(--line)}.pal{border-left:1px solid var(--line)}
+h2{font-size:12px;font-weight:700;color:var(--mute);margin:0}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--mute)}
+label.c{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--ink);cursor:pointer}
+input[type=number],select{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:7px 9px;width:100%}
+input[type=number].s{width:56px;padding:5px 7px}
+input[type=range]{accent-color:var(--accent);width:110px}
+input[type=checkbox]{accent-color:var(--accent);width:16px;height:16px}
+.btn{font:inherit;font-weight:500;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:7px 12px;cursor:pointer}
+.btn:hover:not(:disabled){border-color:var(--accent)}
+.btn:disabled{opacity:.4;cursor:default}
+.btn.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.main{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:700}
+.btn:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.file{display:block;text-align:center}.file input{display:none}
+.btn svg{width:16px;height:16px;vertical-align:-3px;margin-right:6px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+label.btn{display:inline-block}
+.stage{display:flex;flex-direction:column;min-width:0;min-height:0}
+.mat{flex:1;display:flex;overflow:auto;background:var(--mat);padding:18px}
+canvas{display:block;margin:auto;background:#fff;box-shadow:0 4px 20px rgba(0,0,0,.28);cursor:crosshair;touch-action:none;max-width:none}
+.empty{margin:auto;text-align:center;color:var(--mute);max-width:320px;line-height:1.5}
+.info{padding:8px 14px;background:var(--panel);border-top:1px solid var(--line);color:var(--mute);font-size:12px}
+.cur{display:flex;align-items:center;gap:10px}
+.cur i{width:38px;height:38px;border-radius:8px;border:1px solid var(--line);flex:none}
+.list{display:flex;flex-direction:column;gap:2px}
+.sw{display:flex;align-items:center;gap:8px;padding:4px 6px;border-radius:8px;cursor:pointer;border:1px solid transparent;font-size:13px}
+.sw:hover{background:var(--bg)}.sw.on{border-color:var(--accent);background:var(--sel)}
+.sw i{width:22px;height:22px;border-radius:5px;border:1px solid var(--line);display:grid;place-items:center;font:700 12px/1 Onest,sans-serif;font-style:normal;flex:none}
+.sw span{margin-left:auto;color:var(--mute)}
+.hint{font-size:12px;color:var(--mute)}
+.grp{display:contents}
+.dock,.veil,.sheetX{display:none}
+canvas{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+@media (max-width:900px){
+  .app{display:flex;flex-direction:column}
+  .top{flex-wrap:nowrap;overflow-x:auto;gap:6px;padding:8px 10px}
+  .top h1,.top .sep{display:none}
+  .top .btn,.dock .btn{font-size:0;padding:0;min-width:44px;height:44px;display:inline-flex;align-items:center;justify-content:center;flex:none;touch-action:manipulation}
+  .top .btn svg,.dock .btn svg{width:22px;height:22px;margin:0}
+  .btn:not(.top .btn):not(.dock .btn){min-height:44px}
+  input[type=number],select{font-size:16px;min-height:44px}
+  input[type=number].s{min-height:36px}
+  .stage{flex:1;min-height:0}
+  .mat{padding:8px;overscroll-behavior:contain}
+  .info{padding:4px 10px;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .dock{display:flex;gap:6px;align-items:center;justify-content:space-around;padding:8px;background:var(--panel);border-top:1px solid var(--line)}
+  #dockSw{display:block;width:26px;height:26px;border-radius:7px;border:1px solid var(--line)}
+  .side,.pal{position:fixed;left:0;right:0;bottom:0;max-height:80%;z-index:30;border:0;border-radius:18px 18px 0 0;box-shadow:0 -8px 30px rgba(0,0,0,.3);transform:translateY(110%);visibility:hidden;transition:transform .22s ease,visibility 0s .22s}
+  .side.open,.pal.open{transform:none;visibility:visible;transition:transform .22s ease,visibility 0s}
+  .veil{position:fixed;inset:0;z-index:25;background:rgba(0,0,0,.45)}
+  .veil.on{display:block}
+  .sheetX{display:block;align-self:flex-end}
+  .side label.c input[type=range]{width:100%;flex:1}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top">
+    <h1><svg viewBox="0 0 16 16" style="width:20px;height:20px;vertical-align:-4px;margin-right:8px"><rect width="7.5" height="7.5" fill="#c23a63"/><rect x="8.5" width="7.5" height="7.5" fill="#f2b84b"/><rect y="8.5" width="7.5" height="7.5" fill="#2f9e9a"/><rect x="8.5" y="8.5" width="7.5" height="7.5" fill="#4a6fd8"/></svg>Pixelator</h1>
+    <button class="btn" id="undo" title="Отменить (Ctrl+Z)"><svg viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>Отменить</button>
+    <button class="btn" id="redo" title="Вернуть (Ctrl+Y или Ctrl+Shift+Z)"><svg viewBox="0 0 24 24"><path d="m15 14 5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/></svg>Вернуть</button>
+    <span class="sep"></span>
+    <div id="tools" class="grp"><button class="btn on" data-tool="pencil" title="Кисть (B)"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>Кисть</button>
+    <button class="btn" data-tool="fill" title="Заливка областью (G)"><svg viewBox="0 0 24 24"><path d="m19 11-8-8-8.6 8.6a2 2 0 0 0 0 2.8l5.2 5.2a2 2 0 0 0 2.8 0L19 11Z"/><path d="m5 2 5 5"/><path d="M2 13h15"/><path d="M22 20a2 2 0 1 1-4 0c0-1.6 1.7-2.4 2-4 .3 1.6 2 2.4 2 4Z"/></svg>Заливка</button>
+    <button class="btn" data-tool="pick" title="Пипетка: взять цвет с клетки (I)"><svg viewBox="0 0 24 24"><path d="m2 22 1-1h3l9-9"/><path d="M3 21v-3l9-9"/><path d="m15 6 3.4-3.4a2.1 2.1 0 1 1 3 3L18 9l.4.4a2.1 2.1 0 1 1-3 3l-3.8-3.8a2.1 2.1 0 1 1 3-3l.4.4Z"/></svg>Пипетка</button>
+    <button class="btn" data-tool="erase" title="Ластик (E)"><svg viewBox="0 0 24 24"><path d="m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21"/><path d="M22 21H7"/><path d="m5 11 9 9"/></svg>Ластик</button>
+    <button class="btn" data-tool="pan" title="Рука: двигать схему (H). Двумя пальцами можно двигать и масштабировать всегда"><svg viewBox="0 0 24 24"><path d="M5 9l-3 3 3 3"/><path d="M9 5l3-3 3 3"/><path d="M15 19l-3 3-3-3"/><path d="M19 9l3 3-3 3"/><path d="M2 12h20"/><path d="M12 2v20"/></svg>Рука</button></div>
+        <span class="sep"></span>
+    <div id="viewOpts" class="grp"><label class="c"><input type="checkbox" id="gaps" checked> Белые полосы</label>
+    <label class="c"><input type="checkbox" id="bold" checked> Тёмная сетка каждые <input type="number" class="s" id="every" value="10" min="2" max="50"></label>
+    <label class="c"><input type="checkbox" id="symbols"> Символы</label>
+    <label class="c">Увеличение <input type="range" id="zoom" min="4" max="64" value="14"></label></div>
+    <span style="flex:1"></span>
+    <label class="btn" title="Открыть сохранённый проект (.json)"><input type="file" id="openF" accept=".json,application/json" hidden><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/><path d="M12 3v12"/></svg>Открыть</label>
+    <button class="btn" id="saveP" title="Скачать проект, чтобы продолжить позже (.json)"><svg viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"/><path d="M17 21v-8H7v8"/><path d="M7 3v5h8"/></svg>Проект</button>
+    <button class="btn main" id="save" title="Скачать схему картинкой PNG"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>Скачать PNG</button>
+  </div>
+
+  <aside class="side" id="side"><button class="btn sheetX">Закрыть</button>
+    <h2>Исходная картинка</h2>
+    <label class="btn file">Выбрать файл<input type="file" id="file" accept="image/*"></label>
+    <label class="f">Детальность: клеток в ширину
+      <input type="range" id="cellsR" min="10" max="200" value="48" style="width:100%">
+      <input type="number" id="cells" value="48" min="10" max="300">
+    </label>
+    <p class="hint">Меньше клеток — проще схема и крупнее пиксели. Больше — мелкие детали сохраняются.</p>
+    <label class="f">Число цветов <input type="number" id="colors" value="12" min="2" max="64"></label>
+    <label class="f">Метод
+      <select id="method"><option value="pixel">Пиксель-арт (чёткие цвета)</option><option value="smooth">Усреднение (мягкий)</option></select>
+    </label>
+    <label class="c"><input type="checkbox" id="outline" checked> Подчёркивать тёмный контур</label>
+    <label class="c"><input type="checkbox" id="gray"> Оттенки серого</label>
+    <label class="f">Сглаживание деталей (0–5) <input type="number" id="smooth" value="0" min="0" max="5"></label>
+    <label class="f">Убрать одиночные клетки (0–5) <input type="number" id="clean" value="1" min="0" max="5"></label>
+    <button class="btn main" id="gen">Создать схему</button>
+    <p class="hint">Любое изменение настроек пересоздаёт схему и сбрасывает ручные правки. Их можно вернуть кнопкой «Отменить».</p>
+  </aside>
+
+  <main class="stage">
+    <div class="mat" id="mat">
+      <canvas id="cv" hidden></canvas>
+      <div class="empty" id="empty"><b>Загрузите картинку</b><br>Выберите файл или перетащите его сюда. Затем схему можно доработать вручную.<br><button class="btn main" id="pick1" style="margin-top:14px">Выбрать картинку</button></div>
+    </div>
+    <div class="info" id="info">Горячие клавиши: B — кисть, G — заливка, I — пипетка, E — ластик, Ctrl+Z — отмена.</div>
+  </main>
+
+  <aside class="pal" id="pal"><button class="btn sheetX">Закрыть</button>
+    <h2>Выбранный цвет</h2>
+    <div class="cur"><i id="curSw"></i>
+      <div style="display:flex;flex-direction:column;gap:6px"><button class="btn" id="edit">Изменить цвет</button><button class="btn" id="add">Добавить цвет</button></div>
+      <input type="color" id="colorPick" style="position:absolute;opacity:0;pointer-events:none;width:1px;height:1px">
+    </div>
+    <p class="hint">«Изменить цвет» перекрашивает все клетки этого цвета сразу.</p>
+    <h2>Палитра и количество клеток</h2>
+    <div class="list" id="list"></div>
+  </aside>
+  <nav class="dock" id="dock">
+    <button class="btn" id="dockColor" title="Палитра и цвет"><i id="dockSw"></i></button>
+    <button class="btn" id="dockSet" title="Настройки схемы"><svg viewBox="0 0 24 24"><path d="M4 21v-7"/><path d="M4 10V3"/><path d="M12 21v-9"/><path d="M12 8V3"/><path d="M20 21v-5"/><path d="M20 12V3"/><path d="M1 14h6"/><path d="M9 8h6"/><path d="M17 16h6"/></svg>Настройки</button>
+  </nav>
+</div>
+<div class="veil" id="veil"></div>
+
+<script>
+const $ = id => document.getElementById(id);
+const cv = $('cv'), ctx = cv.getContext('2d');
+const SYMS = '●■▲◆★✚✖♥♠♣○□△◇☆+×#@%&*=?!ABCDEFGHJKLMNPQRSTUVWXYZ0123456789';
+let img = null, W = 0, H = 0, grid = null, pal = [], sel = 0, tool = 'pencil';
+let hover = null, hist = [], redo = [], raf = 0, painting = false, last = null, editing = false;
+
+// k-means: уменьшаем число цветов до k
+function quantize(px, k) {
+  const n = px.length / 4, pts = new Array(n);
+  for (let i = 0; i < n; i++) pts[i] = [px[i*4], px[i*4+1], px[i*4+2]];
+  const d2 = (a, b) => (a[0]-b[0])**2 + (a[1]-b[1])**2 + (a[2]-b[2])**2;
+  const cent = [pts[0].slice()], dist = pts.map(p => d2(p, cent[0]));
+  while (cent.length < k) {               // начальные центры: самые далёкие точки
+    let bi = 0;
+    for (let i = 1; i < n; i++) if (dist[i] > dist[bi]) bi = i;
+    if (dist[bi] === 0) break;
+    cent.push(pts[bi].slice());
+    for (let i = 0; i < n; i++) dist[i] = Math.min(dist[i], d2(pts[i], pts[bi]));
+  }
+  const lab = new Int32Array(n);
+  for (let it = 0; it < 8; it++) {
+    const sum = cent.map(() => [0,0,0,0]);
+    for (let i = 0; i < n; i++) {
+      let b = 0, bd = Infinity;
+      for (let c = 0; c < cent.length; c++) { const d = d2(pts[i], cent[c]); if (d < bd) { bd = d; b = c; } }
+      lab[i] = b; const s = sum[b];
+      s[0] += pts[i][0]; s[1] += pts[i][1]; s[2] += pts[i][2]; s[3]++;
+    }
+    sum.forEach((s, c) => { if (s[3]) cent[c] = [s[0]/s[3], s[1]/s[3], s[2]/s[3]]; });
+  }
+  for (let i = 0; i < n; i++) {
+    const c = cent[lab[i]];
+    px[i*4] = Math.round(c[0]); px[i*4+1] = Math.round(c[1]); px[i*4+2] = Math.round(c[2]);
+  }
+}
+
+// медианный фильтр 3×3: убирает мелкий шум и текстуру
+function medianPass(px, W, H) {
+  const src = px.slice();
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    const arr = [];
+    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+      const xx = Math.min(W-1, Math.max(0, x+dx)), yy = Math.min(H-1, Math.max(0, y+dy));
+      const j = (yy * W + xx) * 4;
+      arr.push([0.299*src[j] + 0.587*src[j+1] + 0.114*src[j+2], j]);
+    }
+    arr.sort((a, b) => a[0] - b[0]);
+    const m = arr[4][1], i = (y * W + x) * 4;
+    px[i] = src[m]; px[i+1] = src[m+1]; px[i+2] = src[m+2];
+  }
+}
+
+// одиночные клетки, окружённые другим цветом, перекрашиваем в цвет соседей
+function despeckle(px, W, H, passes) {
+  for (let p = 0; p < passes; p++) {
+    const src = px.slice();
+    const key = j => (src[j] << 16) | (src[j+1] << 8) | src[j+2];
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      const i = (y * W + x) * 4, own = key(i), cnt = new Map();
+      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+        if (!dx && !dy) continue;
+        const xx = x + dx, yy = y + dy;
+        if (xx < 0 || yy < 0 || xx >= W || yy >= H) continue;
+        const j = (yy * W + xx) * 4, kk = key(j), e = cnt.get(kk);
+        if (e) e.n++; else cnt.set(kk, { n: 1, j });
+      }
+      if ((cnt.get(own)?.n || 0) > 0) continue;
+      let best = null;
+      cnt.forEach((e, kk) => { if (kk !== own && (!best || e.n > best.n)) best = e; });
+      if (best && best.n >= 3) { px[i] = src[best.j]; px[i+1] = src[best.j+1]; px[i+2] = src[best.j+2]; }
+    }
+  }
+}
+
+// Пиксель-арт: палитра в Lab, затем каждая клетка берёт преобладающий цвет своего блока.
+// Так контуры и пятна остаются чёткими, а не размываются усреднением.
+const LIN = new Float32Array(256).map((_, i) => { const c = i / 255; return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); });
+const LAB = new Float64Array(3);
+function toLab(r, g, b) {
+  const R = LIN[r], G = LIN[g], B = LIN[b];
+  const t = v => v > 0.008856 ? Math.cbrt(v) : 7.787 * v + 16 / 116;
+  const fx = t((0.4124*R + 0.3576*G + 0.1805*B) / 0.95047), fy = t(0.2126*R + 0.7152*G + 0.0722*B), fz = t((0.0193*R + 0.1192*G + 0.9505*B) / 1.08883);
+  LAB[0] = 116*fy - 16; LAB[1] = 500*(fx - fy); LAB[2] = 200*(fy - fz);
+}
+function pixelArt(px, W, H, k, gray, outline) {
+  const S = W > 200 ? 2 : 3, hw = W * S, hh = H * S, n = hw * hh;
+  const c = document.createElement('canvas'); c.width = hw; c.height = hh;
+  const x = c.getContext('2d');
+  x.fillStyle = '#fff'; x.fillRect(0, 0, hw, hh);
+  x.imageSmoothingEnabled = true; x.imageSmoothingQuality = 'high';
+  x.drawImage(img, 0, 0, hw, hh);
+  const hp = x.getImageData(0, 0, hw, hh).data;
+  if (gray) for (let i = 0; i < hp.length; i += 4) hp[i] = hp[i+1] = hp[i+2] = 0.299*hp[i] + 0.587*hp[i+1] + 0.114*hp[i+2];
+
+  // выборка пикселей и k-means в Lab
+  const stp = Math.max(1, Math.floor(n / 20000)), pts = [], idx = [];
+  for (let p = 0; p < n; p += stp) { const j = p * 4; toLab(hp[j], hp[j+1], hp[j+2]); pts.push([LAB[0], LAB[1], LAB[2]]); idx.push(j); }
+  const m = pts.length, d2 = (a, b) => (a[0]-b[0])**2 + (a[1]-b[1])**2 + (a[2]-b[2])**2;
+  const cent = [pts[0].slice()], dist = pts.map(p => d2(p, cent[0]));
+  while (cent.length < k) {
+    let bi = 0;
+    for (let i = 1; i < m; i++) if (dist[i] > dist[bi]) bi = i;
+    if (dist[bi] < 1) break;
+    cent.push(pts[bi].slice());
+    for (let i = 0; i < m; i++) dist[i] = Math.min(dist[i], d2(pts[i], pts[bi]));
+  }
+  const lab = new Int32Array(m);
+  for (let it = 0; it < 10; it++) {
+    const sum = cent.map(() => [0, 0, 0, 0]);
+    for (let i = 0; i < m; i++) {
+      let b = 0, bd = Infinity;
+      for (let q = 0; q < cent.length; q++) { const d = d2(pts[i], cent[q]); if (d < bd) { bd = d; b = q; } }
+      lab[i] = b; const s = sum[b]; s[0] += pts[i][0]; s[1] += pts[i][1]; s[2] += pts[i][2]; s[3]++;
+    }
+    sum.forEach((s, q) => { if (s[3]) cent[q] = [s[0]/s[3], s[1]/s[3], s[2]/s[3]]; });
+  }
+  const kk = cent.length, pal = cent.map(() => [0, 0, 0, 0]);
+  for (let i = 0; i < m; i++) { const j = idx[i], s = pal[lab[i]]; s[0] += hp[j]; s[1] += hp[j+1]; s[2] += hp[j+2]; s[3]++; }
+  const rgb = pal.map(s => s[3] ? [s[0]/s[3], s[1]/s[3], s[2]/s[3]] : [255, 255, 255]);
+  let dark = 0;
+  cent.forEach((q, i) => { if (q[0] < cent[dark][0]) dark = i; });
+  const wDark = outline && cent[dark][0] < 35 ? 1.7 : 1;
+
+  // каждому пикселю — ближайший цвет палитры
+  const labels = new Uint8Array(n);
+  for (let p = 0; p < n; p++) {
+    const j = p * 4; toLab(hp[j], hp[j+1], hp[j+2]);
+    let b = 0, bd = Infinity;
+    for (let q = 0; q < kk; q++) {
+      const c0 = cent[q], d = (LAB[0]-c0[0])**2 + (LAB[1]-c0[1])**2 + (LAB[2]-c0[2])**2;
+      if (d < bd) { bd = d; b = q; }
+    }
+    labels[p] = b;
+  }
+
+  // клетка = преобладающий цвет блока S×S
+  const cnt = new Float32Array(kk);
+  for (let y = 0; y < H; y++) for (let xx = 0; xx < W; xx++) {
+    cnt.fill(0);
+    for (let sy = 0; sy < S; sy++) for (let sx = 0; sx < S; sx++) {
+      const l = labels[(y * S + sy) * hw + xx * S + sx];
+      cnt[l] += l === dark ? wDark : 1;
+    }
+    let b = 0;
+    for (let q = 1; q < kk; q++) if (cnt[q] > cnt[b]) b = q;
+    const i = (y * W + xx) * 4, col = rgb[b];
+    px[i] = col[0]; px[i+1] = col[1]; px[i+2] = col[2]; px[i+3] = 255;
+  }
+}
+
+
+
+const lum = h => { const n = parseInt(h.slice(1), 16); return .299*(n >> 16) + .587*((n >> 8) & 255) + .114*(n & 255); };
+const toHex = (r, g, b) => '#' + [r, g, b].map(v => Math.round(v).toString(16).padStart(2, '0')).join('');
+const snap = () => ({ W, H, grid: grid.slice(), pal: pal.slice() });
+function pushHist() { if (!grid) return; hist.push(snap()); if (hist.length > 60) hist.shift(); redo = []; }
+function restore(s) { W = s.W; H = s.H; grid = s.grid.slice(); pal = s.pal.slice(); sel = Math.min(sel, pal.length - 1); update(); }
+function undo() { if (!hist.length) return; redo.push(snap()); restore(hist.pop()); }
+function redoIt() { if (!redo.length) return; hist.push(snap()); restore(redo.pop()); }
+
+// ---- создание схемы из картинки
+function generate() {
+  if (!img) return;
+  const w = Math.max(5, Math.min(300, +$('cells').value || 48));
+  const h = Math.max(1, Math.round(w * img.height / img.width));
+  const k = Math.max(2, Math.min(64, +$('colors').value || 12));
+  const gray = $('gray').checked, smooth = +$('smooth').value || 0, clean = +$('clean').value || 0;
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  const x = c.getContext('2d');
+  x.fillStyle = '#fff'; x.fillRect(0, 0, w, h);
+  x.imageSmoothingQuality = 'high'; x.drawImage(img, 0, 0, w, h);
+  const px = x.getImageData(0, 0, w, h).data;
+  if ($('method').value === 'pixel') pixelArt(px, w, h, k, gray, $('outline').checked);
+  else {
+    if (gray) for (let i = 0; i < px.length; i += 4) px[i] = px[i+1] = px[i+2] = 0.299*px[i] + 0.587*px[i+1] + 0.114*px[i+2];
+    for (let s = 0; s < smooth; s++) medianPass(px, w, h);
+    quantize(px, k);
+  }
+  if (clean > 0) despeckle(px, w, h, clean);
+  const cnt = new Map();
+  for (let i = 0; i < px.length; i += 4) { const key = (px[i] << 16) | (px[i+1] << 8) | px[i+2]; cnt.set(key, (cnt.get(key) || 0) + 1); }
+  const order = [...cnt.entries()].sort((a, b) => b[1] - a[1]), idx = new Map();
+  pushHist();
+  pal = order.map(([key], i) => { idx.set(key, i); return toHex(key >> 16, (key >> 8) & 255, key & 255); });
+  W = w; H = h; grid = new Int16Array(w * h);
+  for (let i = 0; i < w * h; i++) grid[i] = idx.get((px[i*4] << 16) | (px[i*4+1] << 8) | px[i*4+2]);
+  sel = 0;
+  $('zoom').value = Math.max(6, Math.min(24, Math.floor(($('mat').clientWidth - 40) / W)));
+  update();
+}
+
+// ---- отрисовка: клетки всегда одного размера, сетка рисуется поверх
+function draw(showHover = true) {
+  if (!grid) return;
+  const cs = +$('zoom').value, g = $('gaps').checked ? (cs >= 16 ? 2 : 1) : 0;
+  cv.width = W * cs; cv.height = H * cs;
+  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, cv.width, cv.height);
+  const sym = $('symbols').checked && cs >= 12;
+  if (sym) { ctx.font = `700 ${Math.round(cs * .6)}px Onest, sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; }
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    const v = grid[y * W + x]; if (v < 0) continue;
+    ctx.fillStyle = pal[v]; ctx.fillRect(x * cs, y * cs, cs, cs);
+    if (sym) { ctx.fillStyle = lum(pal[v]) > 140 ? '#000' : '#fff'; ctx.fillText(SYMS[v % SYMS.length], x * cs + cs / 2, y * cs + cs / 2 + 1); }
+  }
+  if (g) {
+    ctx.fillStyle = '#fff';
+    for (let x = 0; x < W; x++) ctx.fillRect(x * cs, 0, g, H * cs);
+    for (let y = 0; y < H; y++) ctx.fillRect(0, y * cs, W * cs, g);
+  }
+  const n = +$('every').value;
+  if ($('bold').checked && n > 1) {
+    ctx.fillStyle = 'rgba(25,25,25,.8)';
+    for (let x = 0; x <= W; x += n) ctx.fillRect(x * cs - 1, 0, 2, H * cs);
+    for (let y = 0; y <= H; y += n) ctx.fillRect(0, y * cs - 1, W * cs, 2);
+  }
+  if (showHover && hover) { ctx.strokeStyle = '#e11d48'; ctx.lineWidth = 2; ctx.strokeRect(hover.x * cs + 1, hover.y * cs + 1, cs - 2, cs - 2); }
+}
+const redraw = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(() => draw()); };
+
+function update() {
+  const has = !!grid;
+  cv.hidden = !has; $('empty').hidden = has;
+  $('undo').disabled = !hist.length; $('redo').disabled = !redo.length;
+  const counts = new Array(pal.length).fill(0);
+  if (has) { for (const v of grid) if (v >= 0) counts[v]++; draw(); }
+  const list = $('list'); list.innerHTML = '';
+  pal.forEach((c, i) => {
+    const d = document.createElement('div'), sw = document.createElement('i'), t = document.createElement('span');
+    d.className = 'sw' + (i === sel ? ' on' : '');
+    sw.style.background = c; sw.style.color = lum(c) > 140 ? '#000' : '#fff'; sw.textContent = SYMS[i % SYMS.length];
+    t.textContent = counts[i];
+    d.append(sw, c, t); d.onclick = () => { sel = i; if (tool === 'erase' || tool === 'pan') setTool('pencil'); update(); if (mq.matches) closeSheets(); };
+    list.append(d);
+  });
+  $('curSw').style.background = pal[sel] || 'transparent';
+  $('dockSw').style.background = pal[sel] || 'transparent';
+  autosave();
+  if (has) {
+    const used = counts.filter(n => n > 0).length, total = counts.reduce((a, b) => a + b, 0);
+    $('info').textContent = `${W} × ${H} клеток, цветов: ${used}, крестиков: ${total}. Изменения сохраняются в браузере автоматически. Колёсико мыши над схемой — масштаб.`;
+  }
+}
+
+// ---- инструменты
+function setTool(t) { tool = t; cv.style.cursor = t === 'pan' ? 'grab' : 'crosshair'; document.querySelectorAll('[data-tool]').forEach(b => b.classList.toggle('on', b.dataset.tool === t)); }
+document.querySelectorAll('[data-tool]').forEach(b => b.onclick = () => setTool(b.dataset.tool));
+
+function cellAt(e) {
+  const r = cv.getBoundingClientRect();
+  const x = Math.floor((e.clientX - r.left) / r.width * W), y = Math.floor((e.clientY - r.top) / r.height * H);
+  return x >= 0 && y >= 0 && x < W && y < H ? { x, y } : null;
+}
+function paint(x, y) { grid[y * W + x] = tool === 'erase' ? -1 : sel; }
+function line(a, b) {
+  let x = a.x, y = a.y; const dx = Math.abs(b.x - x), dy = Math.abs(b.y - y), sx = x < b.x ? 1 : -1, sy = y < b.y ? 1 : -1;
+  let err = dx - dy;
+  for (;;) { paint(x, y); if (x === b.x && y === b.y) break; const e2 = 2 * err; if (e2 > -dy) { err -= dy; x += sx; } if (e2 < dx) { err += dx; y += sy; } }
+}
+function flood(x, y) {
+  const to = tool === 'erase' ? -1 : sel, from = grid[y * W + x];
+  if (from === to) return;
+  const st = [[x, y]];
+  while (st.length) {
+    const [cx, cy] = st.pop();
+    if (cx < 0 || cy < 0 || cx >= W || cy >= H || grid[cy * W + cx] !== from) continue;
+    grid[cy * W + cx] = to; st.push([cx+1, cy], [cx-1, cy], [cx, cy+1], [cx, cy-1]);
+  }
+}
+const ptrs = new Map();
+let pinch = null, panning = false;
+const dist = () => { const [a, b] = [...ptrs.values()]; return Math.hypot(a[0] - b[0], a[1] - b[1]) || 1; };
+const mid = () => { const [a, b] = [...ptrs.values()]; return [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2]; };
+function zoomAt(nz, cx, cy) {            // масштаб: точка под пальцами остаётся на месте
+  const z = $('zoom'); nz = Math.max(+z.min, Math.min(+z.max, Math.round(nz)));
+  if (nz === +z.value) return;
+  const r = cv.getBoundingClientRect();
+  const fx = Math.max(0, Math.min(1, (cx - r.left) / r.width)), fy = Math.max(0, Math.min(1, (cy - r.top) / r.height));
+  z.value = nz; draw();
+  const r2 = cv.getBoundingClientRect(), m = $('mat');
+  m.scrollLeft += r2.left + fx * r2.width - cx; m.scrollTop += r2.top + fy * r2.height - cy;
+}
+cv.addEventListener('pointerdown', e => {
+  ptrs.set(e.pointerId, [e.clientX, e.clientY]);
+  if (ptrs.size === 2) {                    // два пальца: масштаб и сдвиг
+    if (painting) { painting = false; restore(hist.pop()); }
+    pinch = { d: dist(), z: +$('zoom').value, m: mid() }; panning = false; return;
+  }
+  if (ptrs.size > 2 || !grid) return;
+  cv.setPointerCapture(e.pointerId);
+  if (tool === 'pan') { panning = true; return; }
+  const p = cellAt(e); if (!p) return;
+  if (tool === 'pick') { const v = grid[p.y * W + p.x]; if (v >= 0) { sel = v; setTool('pencil'); update(); } return; }
+  pushHist();
+  if (tool === 'fill') { flood(p.x, p.y); update(); return; }
+  painting = true; last = p; paint(p.x, p.y); redraw();
+});
+cv.addEventListener('pointermove', e => {
+  const prev = ptrs.get(e.pointerId);
+  if (prev) ptrs.set(e.pointerId, [e.clientX, e.clientY]);
+  if (pinch && ptrs.size >= 2) {
+    const m = mid();
+    zoomAt(pinch.z * dist() / pinch.d, pinch.m[0], pinch.m[1]);
+    $('mat').scrollLeft -= m[0] - pinch.m[0]; $('mat').scrollTop -= m[1] - pinch.m[1]; pinch.m = m; return;
+  }
+  if (panning && prev) { $('mat').scrollLeft -= e.clientX - prev[0]; $('mat').scrollTop -= e.clientY - prev[1]; return; }
+  const p = cellAt(e); hover = e.pointerType === 'mouse' ? p : null;
+  if (painting && p) { line(last, p); last = p; }
+  redraw();
+});
+const stop = e => {
+  ptrs.delete(e.pointerId); if (ptrs.size < 2) pinch = null; panning = false;
+  if (painting) { painting = false; update(); } else autosave();
+};
+cv.addEventListener('pointerup', stop); cv.addEventListener('pointercancel', stop);
+cv.addEventListener('pointerleave', () => { hover = null; redraw(); });
+cv.addEventListener('contextmenu', e => e.preventDefault());
+
+// ---- палитра
+$('edit').onclick = () => { if (!pal.length) return; $('colorPick').value = pal[sel]; $('colorPick').click(); };
+$('add').onclick = () => { if (!grid) return; pushHist(); pal.push('#888888'); sel = pal.length - 1; update(); $('colorPick').value = pal[sel]; $('colorPick').click(); };
+$('colorPick').addEventListener('input', e => {
+  if (!editing) { pushHist(); editing = true; }
+  pal[sel] = e.target.value; update();
+});
+$('colorPick').addEventListener('change', () => { editing = false; });
+
+// ---- загрузка и прочее
+function load(f) {
+  if (!f || !f.type.startsWith('image/')) return;
+  const url = URL.createObjectURL(f), im = new Image();
+  im.onload = () => { img = im; URL.revokeObjectURL(url); generate(); closeSheets(); };
+  im.src = url;
+}
+$('file').onchange = e => load(e.target.files[0]);
+$('gen').onclick = generate;
+let gt = 0;
+const live = () => { clearTimeout(gt); gt = setTimeout(generate, 300); };
+$('cellsR').addEventListener('input', e => { $('cells').value = e.target.value; live(); });
+$('cells').addEventListener('input', e => { $('cellsR').value = Math.min(200, e.target.value); live(); });
+['colors', 'method', 'outline', 'gray', 'smooth', 'clean'].forEach(id => $(id).addEventListener('input', live));
+const mat = $('mat');
+mat.addEventListener('dragover', e => e.preventDefault());
+mat.addEventListener('drop', e => { e.preventDefault(); load(e.dataTransfer.files[0]); });
+mat.addEventListener('wheel', e => {
+  if (!grid || e.shiftKey) return;          // Shift + колёсико — обычная прокрутка
+  e.preventDefault();
+  const z = $('zoom'), old = +z.value;
+  const nz = Math.max(+z.min, Math.min(+z.max, old + (e.deltaY < 0 ? 1 : -1) * Math.max(1, Math.round(old * 0.12))));
+  if (nz === old) return;
+  const r = cv.getBoundingClientRect();     // точка под курсором остаётся на месте
+  const fx = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)), fy = Math.max(0, Math.min(1, (e.clientY - r.top) / r.height));
+  z.value = nz; draw();
+  const r2 = cv.getBoundingClientRect();
+  mat.scrollLeft += r2.left + fx * r2.width - e.clientX;
+  mat.scrollTop += r2.top + fy * r2.height - e.clientY;
+  autosave();
+}, { passive: false });
+['gaps', 'bold', 'every', 'symbols', 'zoom'].forEach(id => $(id).addEventListener('input', () => { redraw(); autosave(); }));
+$('undo').onclick = undo; $('redo').onclick = redoIt;
+document.addEventListener('keydown', e => {
+  if (/INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName) && document.activeElement.type !== 'checkbox') return;
+  const k = e.key.toLowerCase(), mod = e.ctrlKey || e.metaKey;
+  if (mod && e.code === 'KeyZ') { e.preventDefault(); e.shiftKey ? redoIt() : undo(); }
+  else if (mod && e.code === 'KeyY') { e.preventDefault(); redoIt(); }
+  else if (!e.ctrlKey && !e.metaKey) { const m = { b: 'pencil', g: 'fill', i: 'pick', e: 'erase', h: 'pan', и: 'pencil', п: 'fill', ш: 'pick', у: 'erase', р: 'pan' }; if (m[k]) setTool(m[k]); }
+});
+// ---- сохранение в браузере (localStorage) и проект-файл
+const KEY = 'xstitch:v1';
+const note = m => { $('info').textContent = m; };
+const viewState = () => ({ gaps: $('gaps').checked, bold: $('bold').checked, every: $('every').value, symbols: $('symbols').checked, zoom: $('zoom').value });
+const project = () => JSON.stringify({ v: 1, W, H, grid: Array.from(grid), pal, view: viewState() });
+let st = 0;
+function autosave() {
+  clearTimeout(st);
+  st = setTimeout(() => { try { if (grid) localStorage.setItem(KEY, project()); } catch (e) {} }, 400);
+}
+function applyProject(s) {
+  const ok = s && s.v === 1 && Number.isInteger(s.W) && Number.isInteger(s.H) && s.W > 0 && s.H > 0 && s.W <= 400 && s.H <= 400
+    && Array.isArray(s.pal) && s.pal.every(c => /^#[0-9a-f]{6}$/i.test(c))
+    && Array.isArray(s.grid) && s.grid.length === s.W * s.H && s.grid.every(v => Number.isInteger(v) && v >= -1 && v < s.pal.length);
+  if (!ok) return false;
+  if (grid) pushHist();
+  W = s.W; H = s.H; grid = Int16Array.from(s.grid); pal = s.pal.slice(); sel = 0;
+  const v = s.view || {};
+  if ('gaps' in v) $('gaps').checked = !!v.gaps;
+  if ('bold' in v) $('bold').checked = !!v.bold;
+  if ('symbols' in v) $('symbols').checked = !!v.symbols;
+  if (+v.every) $('every').value = +v.every;
+  if (+v.zoom) $('zoom').value = +v.zoom;
+  update(); return true;
+}
+
+// ---- скачивание: через разрешение страницы, с запасным вариантом
+let dl = null;
+(window.claude && window.claude.use ? window.claude.use('downloads') : Promise.resolve(null)).then(d => { dl = d; }).catch(() => {});
+async function saveFile(name, data) {
+  if (dl) { try { await dl.save({ filename: name, data }); } catch (e) { if (!e || e.code !== 'declined') note('Не удалось сохранить файл'); } return; }
+  const a = document.createElement('a'); a.download = name; a.href = URL.createObjectURL(data instanceof Blob ? data : new Blob([data])); a.click();
+}
+$('save').onclick = async () => {
+  if (!grid) return;
+  draw(false);
+  const b = await new Promise(r => cv.toBlob(r, 'image/png'));
+  draw();
+  saveFile('pixelator.png', b);
+};
+$('saveP').onclick = () => { if (grid) saveFile('pixelator-project.json', project()); };
+$('openF').onchange = e => {
+  const f = e.target.files[0]; e.target.value = '';
+  if (!f) return;
+  f.text().then(t => { try { if (!applyProject(JSON.parse(t))) note('Файл не похож на проект этой программы.'); } catch (err) { note('Не удалось прочитать файл.'); } });
+};
+// ---- смартфон: инструменты внизу, настройки и палитра в выезжающих панелях
+// иконка для домашнего экрана телефона: 4 пикселя разных цветов
+(function () {
+  const c = document.createElement('canvas'); c.width = c.height = 180;
+  const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, 180, 180);
+  [['#c23a63', 0, 0], ['#f2b84b', 1, 0], ['#2f9e9a', 0, 1], ['#4a6fd8', 1, 1]].forEach(([col, i, j]) => { x.fillStyle = col; x.fillRect(24 + i * 68, 24 + j * 68, 64, 64); });
+  const l = document.createElement('link'); l.rel = 'apple-touch-icon'; l.href = c.toDataURL('image/png'); document.head.append(l);
+})();
+const mq = matchMedia('(max-width:900px)');
+const homes = ['tools', 'viewOpts'].map(id => { const el = $(id); return { el, p: el.parentNode, n: el.nextSibling }; });
+function closeSheets() { $('side').classList.remove('open'); $('pal').classList.remove('open'); $('veil').classList.remove('on'); }
+function openSheet(id) { closeSheets(); $(id).classList.add('open'); $('veil').classList.add('on'); }
+function layout() {
+  if (mq.matches) {
+    if ($('tools').parentNode !== $('dock')) $('dock').prepend($('tools'));
+    if ($('viewOpts').parentNode !== $('side')) $('side').insertBefore($('viewOpts'), $('side').children[1]);
+  } else { homes.forEach(h => { if (h.el.parentNode !== h.p) h.p.insertBefore(h.el, h.n); }); closeSheets(); }
+}
+$('dockSet').onclick = () => openSheet('side');
+$('dockColor').onclick = () => openSheet('pal');
+$('veil').onclick = closeSheets;
+document.querySelectorAll('.sheetX').forEach(b => b.onclick = closeSheets);
+$('pick1').onclick = () => $('file').click();
+mq.addEventListener('change', layout); layout();
+
+try { const s = JSON.parse(localStorage.getItem(KEY) || 'null'); if (s) applyProject(s); } catch (e) {}
+update();
+</script>
+</body>
+</html>
